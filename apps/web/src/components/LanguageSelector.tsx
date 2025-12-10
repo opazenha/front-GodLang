@@ -8,15 +8,15 @@ export function LanguageSelector() {
             code: "zh",
             label: "Chinese",
             native: "中文",
-            gradient: "from-blue-500/20 to-purple-500/20",
-            border: "group-hover:border-blue-400/50",
+            gradient: "from-red-500/20 to-orange-500/20",
+            border: "border-red-500/50",
         },
         {
             code: "uk",
             label: "Ukrainian",
             native: "Українська",
-            gradient: "from-yellow-500/20 to-blue-500/20", // Ukraine flag colors hint
-            border: "group-hover:border-yellow-400/50",
+            gradient: "from-blue-500/20 to-yellow-500/20",
+            border: "border-blue-500/50",
         },
     ];
 
@@ -49,10 +49,10 @@ export function LanguageSelector() {
                         key={lang.code}
                         to="/stream"
                         search={{ lang: lang.code }}
-                        className="group relative overflow-hidden rounded-3xl border border-white/10 bg-card p-8 transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10"
+                        className={`group relative overflow-hidden rounded-3xl border ${lang.border} bg-card p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10`}
                     >
                         <div
-                            className={`absolute inset-0 bg-gradient-to-br ${lang.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
+                            className={`absolute inset-0 bg-gradient-to-br ${lang.gradient}`}
                         />
 
                         <motion.div
