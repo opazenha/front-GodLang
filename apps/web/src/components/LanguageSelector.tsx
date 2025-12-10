@@ -48,7 +48,7 @@ export function LanguageSelector() {
                     <Link
                         key={lang.code}
                         to="/stream"
-                        search={{ lang: lang.code }}
+                        search={{ lang: lang.code as "zh" | "uk" }}
                         className={`group relative overflow-hidden rounded-3xl border ${lang.border} bg-card p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10`}
                     >
                         <div
