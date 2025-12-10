@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, Globe } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function LanguageSelector() {
     const languages = [
@@ -28,8 +28,12 @@ export function LanguageSelector() {
                 transition={{ duration: 0.8 }}
                 className="mb-12 space-y-4"
             >
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/50 backdrop-blur-3xl">
-                    <Globe className="h-10 w-10 text-primary" />
+                <div className="mx-auto flex justify-center pb-6">
+                    <img
+                        src="/logo.png"
+                        alt="Church Logo"
+                        className="h-48 w-auto object-contain"
+                    />
                 </div>
                 <h1 className="text-4xl font-light tracking-tight text-foreground sm:text-6xl">
                     God<span className="font-semibold text-primary">Lang</span>
