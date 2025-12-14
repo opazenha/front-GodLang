@@ -9,55 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StreamRouteImport } from './routes/stream'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StreamSessionIdRouteImport } from './routes/stream.$sessionId'
+import { Route as BroadcastLanguageRouteImport } from './routes/broadcast.$language'
 
-const StreamRoute = StreamRouteImport.update({
-  id: '/stream',
-  path: '/stream',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StreamSessionIdRoute = StreamSessionIdRouteImport.update({
+  id: '/stream/$sessionId',
+  path: '/stream/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BroadcastLanguageRoute = BroadcastLanguageRouteImport.update({
+  id: '/broadcast/$language',
+  path: '/broadcast/$language',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/stream': typeof StreamRoute
+  '/broadcast/$language': typeof BroadcastLanguageRoute
+  '/stream/$sessionId': typeof StreamSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/stream': typeof StreamRoute
+  '/broadcast/$language': typeof BroadcastLanguageRoute
+  '/stream/$sessionId': typeof StreamSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/stream': typeof StreamRoute
+  '/broadcast/$language': typeof BroadcastLanguageRoute
+  '/stream/$sessionId': typeof StreamSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/stream'
+  fullPaths: '/' | '/broadcast/$language' | '/stream/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/stream'
-  id: '__root__' | '/' | '/stream'
+  to: '/' | '/broadcast/$language' | '/stream/$sessionId'
+  id: '__root__' | '/' | '/broadcast/$language' | '/stream/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  StreamRoute: typeof StreamRoute
+  BroadcastLanguageRoute: typeof BroadcastLanguageRoute
+  StreamSessionIdRoute: typeof StreamSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/stream': {
-      id: '/stream'
-      path: '/stream'
-      fullPath: '/stream'
-      preLoaderRoute: typeof StreamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stream/$sessionId': {
+      id: '/stream/$sessionId'
+      path: '/stream/$sessionId'
+      fullPath: '/stream/$sessionId'
+      preLoaderRoute: typeof StreamSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/broadcast/$language': {
+      id: '/broadcast/$language'
+      path: '/broadcast/$language'
+      fullPath: '/broadcast/$language'
+      preLoaderRoute: typeof BroadcastLanguageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  StreamRoute: StreamRoute,
+  BroadcastLanguageRoute: BroadcastLanguageRoute,
+  StreamSessionIdRoute: StreamSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

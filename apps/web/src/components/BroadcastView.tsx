@@ -2,17 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ApiClient, type Translation } from "../services/api";
+import { ApiClient, type Translation, type BroadcastStatus } from "../services/api";
 
-interface StreamViewProps {
-    sessionId: string;
+interface BroadcastViewProps {
+    language: string;
 }
 
-export function StreamView({ sessionId }: StreamViewProps) {
+export function BroadcastView({ language }: BroadcastViewProps) {
     const [transcript, setTranscript] = useState<string>("");
     const [translation, setTranslation] = useState<string>("");
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [broadcastStatus, setBroadcastStatus] = useState<BroadcastStatus | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(null);
 
     // Auto-scroll ref
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -21,69 +23,71 @@ export function StreamView({ sessionId }: StreamViewProps) {
     useEffect(() => {
         let mounted = true;
 
-        const initSession = async () => {
+        const initBroadcast = async () => {
             try {
-                // 1. Check session status
-                await ApiClient.getSessionStatus(sessionId);
+                // 1. Check broadcast status
+                const status = await ApiClient.getBroadcastStatus(language);
+                if (mounted) setBroadcastStatus(status);
 
-                // 2. Fetch history (optional, to show last thing said)
-                const history = await ApiClient.getHistory(sessionId, 1);
-                if (history.length > 0 && mounted) {
-                    setTranscript(history[0].transcript);
-                    setTranslation(history[0].translation);
+                if (status.status === "idle") {
+                    if (mounted) setError("No active broadcast for this language");
+                    return;
                 }
 
                 if (!mounted) return;
 
-                // 3. Connect to SSE
-                const sseUrl = ApiClient.getSessionSSEEndpoint(sessionId);
+                // 2. Connect to broadcast SSE
+                const sseUrl = ApiClient.getBroadcastSSEEndpoint(language);
                 const eventSource = new EventSource(sseUrl);
                 eventSourceRef.current = eventSource;
 
                 eventSource.onopen = () => {
-                    console.log("SSE Connected");
+                    console.log("Broadcast SSE Connected");
                 };
 
                 eventSource.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
-                        console.log("SSE Event:", data);
+                        console.log("Broadcast SSE Event:", data);
 
                         if (data.type === 'connected') {
                             setIsConnected(true);
+                            if (data.session_id && mounted) {
+                                setSessionId(data.session_id);
+                            }
                         } else if (data.type === 'translation') {
-                            // Handle both old and new SSE formats
-                            if (data.translation) {
-                                const t = data.translation as Translation;
-                                setTranscript(t.transcript);
-                                setTranslation(t.translation);
-                            } else if (data.transcription && data.translation) {
-                                // New format with separate transcription and translation objects
-                                setTranscript(data.transcription.transcript || "");
-                                setTranslation(data.translation.translation || "");
+                            if (mounted) {
+                                setTranscript(data.transcription?.transcript || "");
+                                setTranslation(data.translation?.translation || "");
+                            }
+                        } else if (data.type === 'broadcast_ended') {
+                            if (mounted) {
+                                setError("Broadcast has ended");
+                                setIsConnected(false);
                             }
                         } else if (data.type === 'error') {
-                            console.error("SSE Error Message:", data.message);
+                            console.error("Broadcast SSE Error Message:", data.message);
+                            if (mounted) setError(data.message);
                         }
                     } catch (err) {
-                        console.error("Error parsing SSE data:", err);
+                        console.error("Error parsing broadcast SSE data:", err);
                     }
                 };
 
                 eventSource.onerror = (err) => {
-                    console.error("SSE Connection Error:", err);
+                    console.error("Broadcast SSE Connection Error:", err);
                     setIsConnected(false);
                     // EventSource automatically retries, but we handle UI state here
                 };
 
             } catch (err: any) {
-                console.error("Failed to init session:", err);
-                if (mounted) setError(err.message || "Failed to connect to session");
+                console.error("Failed to init broadcast:", err);
+                if (mounted) setError(err.message || "Failed to connect to broadcast");
             }
         };
 
-        if (sessionId) {
-            initSession();
+        if (language) {
+            initBroadcast();
         }
 
         return () => {
@@ -92,7 +96,7 @@ export function StreamView({ sessionId }: StreamViewProps) {
                 eventSourceRef.current.close();
             }
         };
-    }, [sessionId]);
+    }, [language]);
 
     return (
         <div className="flex h-screen flex-col bg-background font-sans text-foreground">
@@ -104,7 +108,7 @@ export function StreamView({ sessionId }: StreamViewProps) {
                         className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        <span>Leave Session</span>
+                        <span>Leave Broadcast</span>
                     </Link>
 
                     <div className="flex items-center gap-2">
@@ -113,7 +117,7 @@ export function StreamView({ sessionId }: StreamViewProps) {
                             <span className={`relative inline-flex h-2 w-2 rounded-full ${isConnected ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
                         </span>
                         <span className={`hidden text-xs font-medium uppercase tracking-widest sm:inline-block ${isConnected ? 'text-red-500' : 'text-yellow-500'}`}>
-                            {isConnected ? 'Live' : 'Connecting'}
+                            {isConnected ? 'Live Broadcast' : 'Connecting'}
                         </span>
                     </div>
                 </div>
@@ -138,13 +142,13 @@ export function StreamView({ sessionId }: StreamViewProps) {
             <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                 {error ? (
                     <div className="flex flex-col items-center gap-4 text-destructive">
-                        <p>Error: {error}</p>
+                        <p>{error}</p>
                         <Link to="/" className="underline">Go back</Link>
                     </div>
                 ) : !isConnected && !translation ? (
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-muted-foreground">Connecting to GodLang stream...</p>
+                        <p className="text-muted-foreground">Connecting to GodLang broadcast...</p>
                     </div>
                 ) : (
                     <AnimatePresence mode="wait">
