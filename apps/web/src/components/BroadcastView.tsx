@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ApiClient, type Translation, type BroadcastStatus } from "../services/api";
+import { ApiClient, type BroadcastStatus, type Translation } from "../services/api";
 
 interface BroadcastViewProps {
     language: string;
@@ -57,8 +57,14 @@ export function BroadcastView({ language }: BroadcastViewProps) {
                             }
                         } else if (data.type === 'translation') {
                             if (mounted) {
-                                setTranscript(data.transcription?.transcript || "");
-                                setTranslation(data.translation?.translation || "");
+                                const nextTranscript =
+                                    data.transcription?.transcript ??
+                                    data.translation?.transcript ??
+                                    "";
+                                const nextTranslation =
+                                    data.translation?.translation ?? "";
+                                setTranscript(nextTranscript);
+                                setTranslation(nextTranslation);
                             }
                         } else if (data.type === 'broadcast_ended') {
                             if (mounted) {
